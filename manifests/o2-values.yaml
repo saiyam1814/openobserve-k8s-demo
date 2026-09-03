@@ -1,6 +1,8 @@
 # OpenObserve single node on kiac. Demo tuning is called out inline.
 image:
   oss:
+    # OpenObserve's official image on AWS ECR. The zinclabs path is historical, the company
+    # was Zinc Labs before the rename. The chart's own default is o2cr.ai/openobserve/openobserve.
     repository: public.ecr.aws/zinclabs/openobserve
     tag: "v1.0.0-rc1"
 

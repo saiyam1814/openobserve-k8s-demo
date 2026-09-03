@@ -38,7 +38,8 @@ spec:
     spec:
       containers:
         - name: checkout
-          image: checkout:demo
+          # fully qualified on purpose: this is exactly the name loaded into the nodes
+          image: docker.io/library/checkout:demo
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
