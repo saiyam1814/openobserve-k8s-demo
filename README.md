@@ -72,8 +72,14 @@ done
 for f in sample.parquet sample.ttv sample.vortex; do printf '%-16s ' "$f"; head -c 4 "$f" | xxd | cut -c10-; done
 duckdb -c "INSTALL vortex; LOAD vortex; SELECT count(*) FROM read_vortex('sample.vortex');"
 
-# edit the .ttv path in the manifest first
-kubectl apply -f manifests/20-ttv-inspect-job.yaml && kubectl -n openobserve logs -f job/ttv-inspect
+# inspect an index file with OpenObserve's own ttv-inspect: the Job needs the node that holds the volume and a file path
+NODE=$(kubectl -n openobserve get pod o2-openobserve-standalone-0 -o jsonpath='{.spec.nodeName}')
+TTV=$(kubectl -n openobserve exec o2-openobserve-standalone-0 -c toolbox -- sh -c \
+  "cd /proc/1/root/data/stream && find files/default/index/default_logs -name '*.ttv' 2>/dev/null | head -1")
+kubectl -n openobserve delete job ttv-inspect --ignore-not-found
+sed -e "s#NODE_NAME#$NODE#" -e "s#TTV_PATH#/data/stream/$TTV#" manifests/20-ttv-inspect-job.yaml | kubectl apply -f -
+kubectl -n openobserve wait --for=condition=complete job/ttv-inspect --timeout=180s
+kubectl -n openobserve logs job/ttv-inspect
 ```
 
 `python3 backfill.py $O2 checkout_archive` writes 40,000 rows into the previous UTC hour if you do not want to wait for compaction.
