@@ -63,9 +63,13 @@ kubectl -n openobserve debug o2-openobserve-standalone-0 --image=busybox:1.36 \
 kubectl -n openobserve exec o2-openobserve-standalone-0 -c toolbox -- sh -c \
   'cd /proc/1/root/data/stream && find files/default -type f | sed "s/.*\.//" | sort | uniq -c'
 
-F=$(kubectl -n openobserve exec o2-openobserve-standalone-0 -c toolbox -- sh -c 'cd /proc/1/root/data/stream && find files/default/logs -name "*.vortex" | head -1')
-kubectl -n openobserve exec o2-openobserve-standalone-0 -c toolbox -- cat "/proc/1/root/data/stream/$F" > sample.vortex
-head -c 4 sample.vortex | xxd
+# copy one file of each type out of the pod (they are binary columnar files) and check the 4-byte signatures
+for ext in parquet ttv vortex; do
+  F=$(kubectl -n openobserve exec o2-openobserve-standalone-0 -c toolbox -- sh -c \
+    "cd /proc/1/root/data/stream && find files/default -name '*.$ext' 2>/dev/null | head -1")
+  kubectl -n openobserve exec o2-openobserve-standalone-0 -c toolbox -- cat "/proc/1/root/data/stream/$F" > sample.$ext
+done
+for f in sample.parquet sample.ttv sample.vortex; do printf '%-16s ' "$f"; head -c 4 "$f" | xxd | cut -c10-; done
 duckdb -c "INSTALL vortex; LOAD vortex; SELECT count(*) FROM read_vortex('sample.vortex');"
 
 # edit the .ttv path in the manifest first
