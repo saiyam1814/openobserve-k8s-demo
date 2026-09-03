@@ -1,0 +1,25 @@
+{
+ "name": "checkout-availability",
+ "description": "POST /checkout spans must not end in ERROR",
+ "sli_type": "count",
+ "config": {
+  "source": {
+   "mode": "single_query",
+   "query": {
+    "stream": "default",
+    "stream_type": "traces",
+    "scope": "operation_name = 'POST /checkout'",
+    "good_expr": "span_status != 'ERROR'"
+   }
+  }
+ },
+ "group_by": null,
+ "groups_estimate": null,
+ "window_secs": 604800,
+ "slice_interval_secs": 300,
+ "target": 99,
+ "tags": [
+  "demo"
+ ],
+ "enabled": true
+}

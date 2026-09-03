@@ -1,0 +1,14 @@
+# openobserve-collector: OTel Collector agent (DaemonSet) + gateway (Deployment),
+# managed by the OpenTelemetry Operator, shipping to the in-cluster OpenObserve.
+k8sCluster: "kiac-o2"
+
+exporters:
+  otlphttp/openobserve:
+    endpoint: http://o2-openobserve-standalone.openobserve.svc.cluster.local:5080/api/default/
+    headers:
+      Authorization: Basic cm9vdEBleGFtcGxlLmNvbTpDb21wbGV4cGFzcyMxMjM=
+  otlphttp/openobserve_k8s_events:
+    endpoint: http://o2-openobserve-standalone.openobserve.svc.cluster.local:5080/api/default/
+    headers:
+      Authorization: Basic cm9vdEBleGFtcGxlLmNvbTpDb21wbGV4cGFzcyMxMjM=
+      stream-name: k8s_events

@@ -1,0 +1,127 @@
+# Demo workload: a checkout service that emits OTel traces (OTLP/HTTP straight to
+# OpenObserve) and JSON logs on stdout (collected by the OpenObserve collector's
+# filelog receiver). A load generator keeps it busy.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shop
+  labels:
+    app.kubernetes.io/part-of: o2-demo
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: o2-otlp-auth
+  namespace: shop
+type: Opaque
+stringData:
+  # root@example.com:Complexpass#123 (the chart's default root user). Demo only.
+  OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Basic cm9vdEBleGFtcGxlLmNvbTpDb21wbGV4cGFzcyMxMjM="
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: shop
+  labels:
+    app: checkout
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+        team: payments
+    spec:
+      containers:
+        - name: checkout
+          image: checkout:demo
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: OTEL_SERVICE_NAME
+              value: checkout
+            - name: APP_VERSION
+              value: "1.0.0"
+            - name: APP_ENV
+              value: kiac
+            - name: FAIL_RATE_PERCENT
+              value: "2"
+            # OpenObserve speaks OTLP/HTTP at /api/{org}/v1/traces. The SDK appends /v1/traces.
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://o2-openobserve-standalone.openobserve.svc.cluster.local:5080/api/default
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: http/protobuf
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              valueFrom:
+                secretKeyRef:
+                  name: o2-otlp-auth
+                  key: OTEL_EXPORTER_OTLP_HEADERS
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "k8s.namespace.name=shop,k8s.cluster.name=kiac-o2"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout
+  namespace: shop
+spec:
+  selector:
+    app: checkout
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgen
+  namespace: shop
+  labels:
+    app: loadgen
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loadgen
+  template:
+    metadata:
+      labels:
+        app: loadgen
+    spec:
+      containers:
+        - name: loadgen
+          image: curlimages/curl:8.14.1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "loadgen: 5 checkouts per second against http://checkout.shop.svc/checkout"
+              while true; do
+                for i in 1 2 3 4 5; do
+                  curl -s -o /dev/null -w '%{http_code}\n' -X POST http://checkout.shop.svc/checkout &
+                done
+                wait
+                sleep 1
+              done
+          resources:
+            requests:
+              cpu: 20m
+              memory: 16Mi
+            limits:
+              memory: 64Mi

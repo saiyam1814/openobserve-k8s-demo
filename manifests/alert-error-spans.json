@@ -1,0 +1,43 @@
+{
+ "id": "3IlEZgA5TSGAwDC0Rl3spdfsGut",
+ "name": "checkout-error-spans",
+ "org_id": "default",
+ "stream_type": "traces",
+ "stream_name": "default",
+ "is_real_time": false,
+ "query_condition": {
+  "type": "sql",
+  "conditions": null,
+  "sql": "SELECT _timestamp, trace_id, order_id, duration FROM \"default\" WHERE operation_name = 'POST /checkout' AND span_status = 'ERROR'",
+  "promql": null,
+  "promql_condition": null,
+  "aggregation": null,
+  "vrl_function": null,
+  "search_event_type": null,
+  "multi_time_range": null
+ },
+ "trigger_condition": {
+  "period": 5,
+  "operator": ">=",
+  "threshold": 100,
+  "frequency": 1,
+  "cron": "",
+  "frequency_type": "minutes",
+  "silence": 5,
+  "tolerance_in_secs": null,
+  "align_time": true
+ },
+ "destinations": [
+  "alert-sink"
+ ],
+ "context_attributes": {
+  "runbook": "curl checkout/chaos?rate=2 to heal"
+ },
+ "row_template": "",
+ "row_template_type": "String",
+ "description": "At least 100 failed POST /checkout spans in the last 5 minutes (row count vs threshold)",
+ "enabled": true,
+ "tz_offset": 0,
+ "creates_incident": false,
+ "workflows": []
+}

@@ -1,0 +1,45 @@
+# OpenObserve single node on kiac. Demo tuning is called out inline.
+image:
+  oss:
+    repository: public.ecr.aws/zinclabs/openobserve
+    tag: "v1.0.0-rc1"
+
+service:
+  type: LoadBalancer   # kiac ships a LoadBalancer controller, so this gets a real IP
+  http_port: 5080
+  grpc_port: 5081
+
+persistence:
+  enabled: true
+  size: 20Gi
+
+resources:
+  requests:
+    cpu: "1"
+    memory: 2Gi
+  limits:
+    memory: 4Gi
+
+auth:
+  ZO_ROOT_USER_EMAIL: "root@example.com"
+  ZO_ROOT_USER_PASSWORD: "Complexpass#123"
+
+config:
+  # The 1.0 feature under test: logs are written as Vortex by the compactor,
+  # metrics and traces stay Parquet.
+  ZO_FILE_FORMAT: "parquet,logs=vortex"
+  # Demo pacing: rotate WAL/memtable every 60s instead of 600s so files show up fast.
+  ZO_MAX_FILE_RETENTION_TIME: "60"
+  # Demo pacing: drop compacted-away files after 10 min instead of 120.
+  ZO_COMPACT_DELETE_FILES_DELAY_MINUTES: "10"
+  ZO_TELEMETRY: "false"
+  ZO_PROMETHEUS_ENABLED: "true"
+
+# Demo only: the alert webhook sink is a ClusterIP service, which the SSRF guard
+# blocks by default (private IP). Never set this on an internet-facing instance.
+extraEnv:
+  - name: ZO_SKIP_SSRF_CHECKS
+    value: "true"
+  # Demo only: see what each SLO ingest pass reports.
+  - name: RUST_LOG
+    value: "info,openobserve_core::slo=debug,openobserve_core::alerts::scheduler::handlers=debug"

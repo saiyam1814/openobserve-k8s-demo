@@ -1,0 +1,46 @@
+{
+ "template": {
+  "name": "burn-rate-json",
+  "type": "http",
+  "title": "",
+  "body": "{\"alert\":\"{alert_name}\",\"stream\":\"{stream_type}/{stream_name}\",\"org\":\"{org_name}\",\"type\":\"{alert_type}\",\"level\":\"{alert_level}\",\"fired_at\":\"{alert_start_time}\",\"url\":\"{alert_url}\"}"
+ },
+ "destination": {
+  "name": "alert-sink",
+  "url": "http://alert-sink.shop.svc:8080/alerts",
+  "method": "post",
+  "skip_tls_verify": false,
+  "template": "burn-rate-json",
+  "headers": {
+   "content-type": "application/json"
+  }
+ },
+ "alert": {
+  "name": "checkout-burn-rate",
+  "description": "Fast burn on checkout-availability SLO (14.4x critical, 6x warning)",
+  "stream_type": "traces",
+  "stream_name": "default",
+  "is_real_time": false,
+  "query_condition": {
+   "type": "slo",
+   "slo_condition": {
+    "slo_id": "7500794280517042176",
+    "kind": "burn_rate",
+    "operator": ">=",
+    "critical": 14.4,
+    "warning": 6.0,
+    "long_window_secs": 3600,
+    "short_window_secs": 600
+   }
+  },
+  "trigger_condition": {
+   "period": 5,
+   "frequency": 1,
+   "silence": 0
+  },
+  "destinations": [
+   "alert-sink"
+  ],
+  "enabled": true
+ }
+}

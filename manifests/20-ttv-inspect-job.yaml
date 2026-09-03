@@ -1,0 +1,30 @@
+# Runs OpenObserve's own `ttv-inspect` CLI against an index file on the live data
+# volume. The image is distroless, so this is the clean way to run the CLI in-cluster.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ttv-inspect
+  namespace: openobserve
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: kiac-o2-worker-2   # local-path PV lives on this node
+      securityContext:
+        runAsUser: 10000
+        runAsGroup: 3000
+        fsGroup: 2000
+      containers:
+        - name: inspect
+          image: public.ecr.aws/zinclabs/openobserve:v1.0.0-rc1
+          command: ["/openobserve", "ttv-inspect", "-f", "/data/stream/files/default/index/checkout_archive_logs/2026/09/02/04/7500789921582415872ea86.ttv"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-o2-openobserve-standalone-0

@@ -1,0 +1,66 @@
+{
+ "name": "parse-shop-logs",
+ "description": "Parse the JSON body of checkout logs into fields (level, msg, trace_id, span_id, order_id) at ingest time",
+ "source": {
+  "source_type": "realtime"
+ },
+ "nodes": [
+  {
+   "id": "1ce36405-3b49-4df5-931e-1cad3a910752",
+   "type": "input",
+   "data": {
+    "node_type": "stream",
+    "stream_name": "default",
+    "stream_type": "logs",
+    "org_id": "default"
+   },
+   "position": {
+    "x": 100,
+    "y": 100
+   },
+   "io_type": "input"
+  },
+  {
+   "id": "9922e74d-98b6-4fd8-9454-3888daa9b65c",
+   "type": "function",
+   "data": {
+    "node_type": "function",
+    "name": "parse_checkout_json",
+    "after_flatten": true
+   },
+   "position": {
+    "x": 300,
+    "y": 100
+   },
+   "io_type": "default"
+  },
+  {
+   "id": "7d6c7b30-fa31-44f5-8572-253b35db8932",
+   "type": "output",
+   "data": {
+    "node_type": "stream",
+    "stream_name": "default",
+    "stream_type": "logs",
+    "org_id": "default"
+   },
+   "position": {
+    "x": 500,
+    "y": 100
+   },
+   "io_type": "output"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e-1ce36405-3b49-4df5-931e-1cad3a910752-9922e74d-98b6-4fd8-9454-3888daa9b65c",
+   "source": "1ce36405-3b49-4df5-931e-1cad3a910752",
+   "target": "9922e74d-98b6-4fd8-9454-3888daa9b65c"
+  },
+  {
+   "id": "e-9922e74d-98b6-4fd8-9454-3888daa9b65c-7d6c7b30-fa31-44f5-8572-253b35db8932",
+   "source": "9922e74d-98b6-4fd8-9454-3888daa9b65c",
+   "target": "7d6c7b30-fa31-44f5-8572-253b35db8932"
+  }
+ ],
+ "org": "default"
+}

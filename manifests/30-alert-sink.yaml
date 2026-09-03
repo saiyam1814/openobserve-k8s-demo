@@ -1,0 +1,33 @@
+# A tiny HTTP echo server that logs every request body. Used as the alert
+# webhook destination so a firing burn-rate alert is visible in `kubectl logs`.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-sink
+  namespace: shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: alert-sink}
+  template:
+    metadata:
+      labels: {app: alert-sink}
+    spec:
+      containers:
+        - name: echo
+          image: mendhak/http-https-echo:37
+          ports: [{containerPort: 8080, name: http}]
+          env:
+            - {name: LOG_WITHOUT_NEWLINE, value: "true"}
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {memory: 128Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alert-sink
+  namespace: shop
+spec:
+  selector: {app: alert-sink}
+  ports: [{name: http, port: 8080, targetPort: http}]
