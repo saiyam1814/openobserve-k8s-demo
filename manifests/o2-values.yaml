@@ -42,6 +42,3 @@ config:
 extraEnv:
   - name: ZO_SKIP_SSRF_CHECKS
     value: "true"
-  # Demo only: see what each SLO ingest pass reports.
-  - name: RUST_LOG
-    value: "info,openobserve_core::slo=debug,openobserve_core::alerts::scheduler::handlers=debug"
