@@ -27,7 +27,7 @@ auth:
   ZO_ROOT_USER_PASSWORD: "Complexpass#123"
 
 config:
-  # The 1.0 feature under test: logs are written as Vortex by the compactor,
+  # The 1.0 feature under test: logs are written as Vortex by the ingester,
   # metrics and traces stay Parquet.
   ZO_FILE_FORMAT: "parquet,logs=vortex"
   # Demo pacing: rotate WAL/memtable every 60s instead of 600s so files show up fast.

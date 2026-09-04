@@ -33,7 +33,7 @@ export AUTH='root@example.com:Complexpass#123'    # chart default, change it
 ```bash
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.19.1/cert-manager.yaml
 kubectl -n cert-manager rollout status deploy/cert-manager-webhook --timeout=240s
-kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/download/v0.158.0/opentelemetry-operator.yaml
 kubectl -n opentelemetry-operator-system rollout status deploy/opentelemetry-operator-controller-manager --timeout=240s
 helm upgrade -i o2c openobserve/openobserve-collector -n openobserve-collector --create-namespace -f manifests/collector-values.yaml
 curl -s -u $AUTH "$O2/api/default/streams?type=logs" | jq -r '.list[].name'
