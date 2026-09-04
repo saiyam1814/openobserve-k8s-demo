@@ -110,7 +110,7 @@ kubectl -n shop logs deploy/alert-sink -f | jq -R -c 'fromjson? | select(.path==
 kubectl -n shop exec deploy/loadgen -- curl -s "http://checkout.shop.svc/chaos?rate=2"    # heal
 ```
 
-On v1.0.0-rc1 in local mode (SQLite) the SLO status never updates, so SLO-backed alerts stay "frozen (unobserved)": the SLO ingest pass writes through the read-only database client. Plain alerts work. Upstream issue: https://github.com/openobserve/openobserve/issues/14189 (also present in v1.0.0-rc2).
+On v1.0.0-rc1 in local mode (SQLite) the SLO status never updates, so SLO-backed alerts stay "frozen (unobserved)": the SLO ingest pass writes through the read-only database client. Plain alerts work. Upstream issue: https://github.com/openobserve/openobserve/issues/14189 (also present in v1.0.0-rc2), fix in https://github.com/openobserve/openobserve/pull/14192.
 
 The values file sets `ZO_SKIP_SSRF_CHECKS=true` so the in-cluster webhook is allowed. Do not do that on anything internet-facing.
 
