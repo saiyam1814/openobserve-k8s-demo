@@ -114,6 +114,33 @@ On v1.0.0-rc1 in local mode (SQLite) the SLO status never updates, so SLO-backed
 
 The values file sets `ZO_SKIP_SSRF_CHECKS=true` so the in-cluster webhook is allowed. Do not do that on anything internet-facing.
 
+## 8. Compaction, size on disk, query timing
+
+```bash
+# open hour vs closed hour on disk
+kubectl -n openobserve exec o2-openobserve-standalone-0 -c toolbox -- sh -c '
+  cd /proc/1/root/data/stream
+  PREV=$(date -u -d @$(( $(date +%s) - 3600 )) +%Y/%m/%d/%H); CUR=$(date -u +%Y/%m/%d/%H)
+  echo "closed hour $PREV (KB, file)"
+  du -ak files/default/logs/default/$PREV files/default/index/default_logs/$PREV files/default/bloom/default_logs/$PREV | grep "\."
+  echo "current hour $CUR: $(ls files/default/logs/default/$CUR | wc -l) files"'
+
+# bytes in, bytes on disk, index size, per signal
+for t in logs metrics traces; do
+  curl -s -u $AUTH "$O2/api/default/streams?type=$t" | jq -r --arg t $t \
+    '[.list[].stats] | "\($t): \(length) streams, \(map(.doc_num)|add) rows, \(map(.storage_size)|add|round) MB in, \(map(.compressed_size)|add|round) MB on disk, \(map(.index_size)|add|round) MB index"'
+done
+
+# three queries over the last 12 hours of logs; took is ms, scan_size is MB
+NOW=$(date +%s); FROM=$((NOW-43200))
+q() { curl -s -u $AUTH -H 'Content-Type: application/json' -X POST "$O2/api/default/_search?type=logs" \
+  -d "{\"query\":{\"sql\":\"$1\",\"start_time\":${FROM}000000,\"end_time\":${NOW}000000,\"size\":5}}" \
+  | jq -c '{took, total, scan_records, scan_size, idx_scan_size}'; }
+q "SELECT count(*) AS rows FROM \\\"default\\\""
+q "SELECT k8s_namespace_name, count(*) AS rows FROM \\\"default\\\" GROUP BY k8s_namespace_name"
+q "SELECT _timestamp, k8s_namespace_name, body FROM \\\"default\\\" WHERE match_all('readonly database')"
+```
+
 ## Teardown
 
 ```bash
