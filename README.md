@@ -86,6 +86,8 @@ kubectl -n openobserve logs job/ttv-inspect
 
 ## 6. MCP
 
+`mcp.sh` reads `O2` and `AUTH` from step 1, so export them again if this is a new shell.
+
 ```bash
 ./mcp.sh tools/list | jq -r '.result.tools[].name'
 ./mcp.sh tools/call '{"name":"tool_search","arguments":{"query":"list traces with errors","limit":3}}' | jq -r '.result.content[0].text | fromjson | .tools[].name'

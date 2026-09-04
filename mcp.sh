@@ -1,7 +1,7 @@
 #!/bin/sh
 # Minimal MCP client over streamable HTTP using curl.
 # Usage: O2=http://<ip>:5080 AUTH='user:password' ./mcp.sh <method> ['<params-json>']
-O2=${O2:?set O2, e.g. export O2=http://<loadbalancer-ip>:5080}
+O2=${O2:?not set. Export the step 1 variables in this shell first: export O2=http://<loadbalancer-ip>:5080 AUTH=user:password}
 ORG=${ORG:-default}
 TOKEN=$(printf "%s" "${AUTH:-root@example.com:Complexpass#123}" | base64)
 PARAMS=${2:-'{}'}
